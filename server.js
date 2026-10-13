@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 
 const User = require("./models/User");
 const authRoute = require("./routes/authRoutes")
+const productRoute = require("./routes/productRoutes")
 
 const app = express();
 
@@ -12,6 +13,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/auth", authRoute)
+app.use("/api/route", productRoute)
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
