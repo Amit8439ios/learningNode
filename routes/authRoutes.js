@@ -6,24 +6,30 @@ const crypto = require('crypto')
 const ProductUser = require('../models/ProductUser')
 const authMiddleware = require('../middleware/authMiddleware')
 const BlockedToken = require('../models/BlocklistedToken')
+const { userSchema } = require("../validators/authValidator");
 
 const route = express.Router()
 
 
 route.post("/signup", async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body
+        const { error, value } = userSchema.validate(req.body, {
+            abortEarly: false,
+            convert: true
+        });
 
-        if (!firstName || !lastName || !email || !password) {
+        if (error) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required"
-            })
+                message: "Validation failed",
+                errors: error.details.map((detail) => detail.message)
+            });
         }
 
-        const mailexist = await ProductUser.findOne({
-            email: email.toLowerCase().trim()
-        })
+        // value is already trimmed and lowercased by Joi
+        const { firstName, lastName, email, password } = value
+
+        const mailexist = await ProductUser.findOne({ email })
 
         if (mailexist) {
             return res.status(409).json({
@@ -37,7 +43,7 @@ route.post("/signup", async (req, res) => {
         const user = await ProductUser.create({
             firstName,
             lastName,
-            email: email.toLowerCase().trim(),
+            email,
             password: hashpassword
         })
 
