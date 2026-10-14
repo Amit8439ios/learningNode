@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema(
         }
     },
     {
-        timeseries: true
+        timestemps: true
     }
 )
 
