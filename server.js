@@ -3,9 +3,9 @@ const express = require("express");
 require("dotenv").config();
 const mongoose = require("mongoose");
 
-const User = require("./models/User");
 const authRoute = require("./routes/authRoutes")
 const productRoute = require("./routes/productRoutes")
+const errorHandler = require("./middleware/errorHandler")
 
 const app = express();
 
@@ -14,6 +14,9 @@ app.use(express.json());
 
 app.use("/api/auth", authRoute)
 app.use("/api/route", productRoute)
+
+// must be registered after all routes
+app.use(errorHandler)
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)

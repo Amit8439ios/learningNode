@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken')
-const crypto = require('crypto')
-const BlacklistedToken = require("../models/BlocklistedToken");
-
+const authService = require('../services/authService')
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -15,22 +13,17 @@ const authMiddleware = async (req, res, next) => {
         }
         const token = authHeader.split(" ")[1]
 
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET
-        );
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-         const tokenHash = crypto
-            .createHash("sha256")
-            .update(token)
-            .digest("hex");
+        if (await authService.isTokenBlacklisted(token)) {
+            return res.status(401).json({
+                success: false,
+                message: "Token has been logged out"
+            })
+        }
 
-        const blacklistedToken = await BlacklistedToken.findOne({
-            tokenHash
-        });
-
-        req.user = decoded;
-        req.token = token;
+        req.user = decoded
+        req.token = token
 
         next()
     }
@@ -38,9 +31,8 @@ const authMiddleware = async (req, res, next) => {
         return res.status(401).json({
             success: false,
             message: "Invalid or expired token"
-        });
+        })
     }
 }
-
 
 module.exports = authMiddleware
