@@ -62,4 +62,71 @@ route.get("/getProduct", authMiddleware, async (req, res) => {
     }
 })
 
+
+route.put("/updateProduct/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params
+        const { productType } = req.body
+
+        if (!productType) {
+            return res.status(400).json({
+                success: false,
+                message: "product type is required"
+            })
+        }
+
+        const product = await Product.findOneAndUpdate(
+            {
+                _id: id,
+                userId: req.user.userId
+            },
+            {
+                $set: { productType: productType }
+            }
+        )
+
+        return res.status(200).json({
+            success: true,
+            message: "product type is updated",
+            data: product
+        })
+    }
+    catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        })
+    }
+})
+
+
+route.delete("/deleteProduct/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const product = await Product.findOneAndDelete({
+            _id: id,
+            userId: req.user.userId
+        })
+
+        if (!product) {
+            return res.status(400).json({
+                success: false,
+                message: "product not found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "product deleted",
+            data: product
+        })
+    }
+    catch (err) {
+
+    }
+})
+
+
+
 module.exports = route
