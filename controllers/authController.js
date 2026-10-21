@@ -43,7 +43,7 @@ const login = async (req, res) => {
 }
 
 const logout = async (req, res) => {
-    await authService.logout(req.token, req.user)
+    await authService.logout(req.token)
 
     return res.status(200).json({
         success: true,

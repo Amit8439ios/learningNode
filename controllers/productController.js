@@ -21,12 +21,14 @@ const createProduct = async (req, res) => {
 }
 
 const getProducts = async (req, res) => {
-    const products = await productService.getProductsByUser(req.user.userId)
+    const { page, limit } = req.query
+    const { products, pagination } = await productService.getProductsByUser(req.user.userId, page, limit)
 
     return res.status(200).json({
         success: true,
         message: "product list",
-        data: products
+        data: products,
+        pagination
     })
 }
 

@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const ProductUser = require('../models/ProductUser')
-const BlockedToken = require('../models/BlocklistedToken')
+const Token = require('../models/Token')
 const AppError = require('../utils/AppError')
 
 const hashToken = (token) =>
@@ -51,6 +51,12 @@ const login = async ({ email, password }) => {
         { expiresIn: "1h" }
     )
 
+    await Token.create({
+        tokenHash: hashToken(token),
+        userId: userExist._id,
+        expiresAt: new Date(jwt.decode(token).exp * 1000)
+    })
+
     return {
         token,
         user: {
@@ -61,16 +67,13 @@ const login = async ({ email, password }) => {
     }
 }
 
-const logout = async (token, decoded) => {
-    await BlockedToken.create({
-        hasToken: hashToken(token),
-        expiresAt: new Date(decoded.exp * 1000)
-    })
+const logout = async (token) => {
+    await Token.deleteOne({ tokenHash: hashToken(token) })
 }
 
-const isTokenBlacklisted = async (token) => {
-    const found = await BlockedToken.findOne({ hasToken: hashToken(token) })
+const isTokenActive = async (token) => {
+    const found = await Token.exists({ tokenHash: hashToken(token) })
     return Boolean(found)
 }
 
-module.exports = { signup, login, logout, isTokenBlacklisted }
+module.exports = { signup, login, logout, isTokenActive }

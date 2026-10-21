@@ -9,25 +9,48 @@ const createProduct = async (userId, { productName, productType }) => {
     return Product.create({ productName, productType, userId })
 }
 
-const getProductsByUser = async (userId) => {
-    const CacheKey = String(userId)
+const getProductsByUser = async (userId, page = 1, limit = 2) => {
+    page = Math.max(parseInt(page) || 1, 1)
+    limit = Math.max(parseInt(limit) || 2, 1)
+
+    const CacheKey = `${userId}:${page}:${limit}`
 
     const ctachData = productCache.get(CacheKey)
 
     if (ctachData && ctachData.expiry > Date.now()) {
         console.log("fetch from Cache")
-        return ctachData.products
+        return ctachData.result
     }
     console.log("not found in Cache")
 
-    const product = await Product.find({ userId }).lean();
+    const skip = (page - 1) * limit
 
-    productCache.set(CacheKey, { products: product, expiry: Date.now() + CacheTTL })
-    return product
+    const [products, total] = await Promise.all([
+        Product.find({ userId }).sort({ _id: -1 }).skip(skip).limit(limit).lean(),
+        Product.countDocuments({ userId })
+    ])
+
+    const result = {
+        products,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
+
+    productCache.set(CacheKey, { result, expiry: Date.now() + CacheTTL })
+    return result
 }
 
 const CacheInvalidator = (userId) => {
-    productCache.delete(String(userId))
+    const prefix = `${userId}:`
+    for (const key of productCache.keys()) {
+        if (key.startsWith(prefix)) {
+            productCache.delete(key)
+        }
+    }
 }
 
 const updateProductType = async (userId, productId, productType) => {

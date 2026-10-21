@@ -15,7 +15,7 @@ const authMiddleware = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-        if (await authService.isTokenBlacklisted(token)) {
+        if (!(await authService.isTokenActive(token))) {
             return res.status(401).json({
                 success: false,
                 message: "Token has been logged out"

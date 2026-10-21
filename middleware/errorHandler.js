@@ -1,3 +1,4 @@
+const multer = require('multer')
 const AppError = require('../utils/AppError')
 
 // Central place that converts any thrown error into a JSON response.
@@ -8,6 +9,14 @@ const errorHandler = (err, req, res, next) => {
             success: false,
             message: err.message,
             ...(err.errors && { errors: err.errors })
+        })
+    }
+
+    // Upload problems, e.g. file too large or wrong field name
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+            success: false,
+            message: err.message
         })
     }
 
